@@ -18,7 +18,7 @@ int p1=0;
 int p2=0;
 int p3=0;
 int jal = -1;
-
+int breakpoints[16386];
 
 
 int instrex=0;
@@ -1500,6 +1500,193 @@ void printc(char *s,int size)
 	}
 }
 
+FILE *writer;
+	
+FILE *resss;
+int total;
+int cycles=0;
+FILE *js;
+FILE *writ;
+
+int ekstep()
+{
+
+	if(pc.en==0 && iff.en==0 && id.en==0 && ex.en==0 && wb.en==0)
+    {
+    	printf("end of input\n");
+	    for(int i=1;i<10;i++)
+    	{
+    		
+    		{
+    			fprintf(writ, ".fil%d {fill:grey}\n", i);
+    			fflush(writ);
+    		}
+    		
+    	}
+    	fprintf(writ, ".stroke1 {stroke:grey;fill:grey}\n");
+    	fflush(writ);
+		fprintf(writ, ".stroke2 {stroke:grey;fill:grey}\n");
+    	fflush(writ);
+		fprintf(writ, ".stroke3 {stroke:grey;fill:grey}\n");
+    	fflush(writ);
+    	//printf("fdd\n");
+
+	    
+	    if(resss==NULL)
+	    {
+	        fprintf(stderr, "No resssult File\n");
+	        exit(0);
+	    }
+
+
+	    fprintf(resss, "Instructions,%d\n",(instrex));
+	    fprintf(resss, "Cycles,%d\n",cycles);
+	    fprintf(resss, "IPC,%.4f\n",(1.0*(instrex))/cycles);
+	    fprintf(resss, "Time (ns),%.4f\n",(cycles)/2.0);
+	    fprintf(resss, "Idle time (ns),%.4f\n",(cycles - instrex)/2.0);
+	    fprintf(resss, "Idle time (%),%.4f%\n",(100.0 * (cycles - instrex))/(cycles));
+	    fprintf(resss, "Cache Summary \nCache L1-I\nnum cache accesses,%d\n",(cacheacess));
+	    fprintf(resss, "Cache L1-D \nnum cache accesses,%d\n",ldstr);
+	    fflush(resss);
+
+	
+	    
+
+
+    	return -1;
+    }
+
+
+
+
+    cycles++;
+	str=0;
+	ldr = 0;
+	wbb = 0;
+	brr=0;
+	p1=0;
+	p2=0;
+	p3=0;
+    
+    pthread_create(&fetchers[0],NULL,fetch0,(void *)&pc_temp);
+	pthread_create(&fetchers[1],NULL,fetch1,(void *)&iff_temp);
+	pthread_create(&fetchers[2],NULL,fetch2,(void *)&id_temp);
+	pthread_create(&fetchers[3],NULL,fetch3,(void *)&ex_temp);
+    pthread_create(&fetchers[4],NULL,fetch4,(void *)&wb_temp);
+    for(int i=0;i<5;i++)
+    {
+    	pthread_join(fetchers[i],NULL);
+    }
+
+	pthread_create(&fetchers[4],NULL,writeback,(void *)&wb_temp);
+    pthread_create(&fetchers[0],NULL,pcwala,(void *)&pc_temp);
+    pthread_join(fetchers[4],NULL);
+    pthread_create(&fetchers[1],NULL,regiswala,(void *)&iff_temp);
+	pthread_create(&fetchers[2],NULL,alu,(void *)&id_temp);
+	pthread_create(&fetchers[3],NULL,datamem,(void *)&ex_temp);
+    for(int i=0;i<5;i++)
+    {
+    	pthread_join(fetchers[i],NULL);
+    }
+   	if(ex.en==-1)
+   	{
+   		if(id.en^iff.en==1)
+   		{
+            if(jal!=-1)
+            {
+                rf[jal] = pc.pc - 1;//TODO chk write pc goes inside
+            }
+   			pc.pc = pc.pc + ex.res - 1;
+   		}
+   		else if(id.en==0 && iff.en==0)
+   		{
+            if(jal!=-1)
+            {
+                rf[jal] = pc.pc;//TODO chk write pc goes inside
+            }
+   			pc.pc = pc.pc + ex.res ;
+   		}
+   		else
+   		{
+            if(jal!=-1)
+            {
+                rf[jal] = pc.pc - 2;//TODO chk write pc goes inside
+            }
+   			pc.pc = pc.pc + ex.res - 2;
+   		}
+   		jal=-1;
+   		ex.en=1;
+   		iff.en=0;
+   		id.en=0;
+   		pc.en=1;
+   		branch++;
+   		branch++;
+   		
+   	}
+    // for(int i=0;i<32;i++)
+    // {
+    // 	printf("r%d : %d \n",i,rf[i]);
+    // }
+    // printf("intermediates\n");
+    // {
+    // 	printf("pc :en %d pc: %d\n",pc.en,pc.pc);
+    // 	printf("iff : en:%d instr: ",iff.en);
+    // 	print(iff.instr,32);
+    // 	printf("id: op1-> %d op2-> %d en:%d  strreg:  %d instr: ",id.op1,id.op2,id.en,id.strreg);
+    // 	print(id.instr,32);
+    // 	printf("ex: res-> %d  en:%d  instr: ",ex.res,ex.en);
+    // 	print(ex.instr,32);
+    // 	printf("wb: res-> %d en:%d  instr: ",wb.res,wb.en);
+    // 	print(wb.instr,32);	
+    // }
+    // printf("data memory\n");
+    // {
+    // 	for(int i=0;i<10;i++)
+    // 	{
+    // 		printf("dm %d: %d \n",i,dm[i]);
+    // 	}
+    // }
+
+    
+    if(pc.pc>=total)
+    {
+    	pc.en=0;
+    	
+    }
+    js = fopen("bnjaa.js","w");
+    fprintf(js, "function instrdisplay(){\n");
+    fflush(js);
+   
+	char *sd = dis(iff.instr,iff.en);
+	//printf("ddd%s\n",sd);
+    fprintf(js, "document.getElementById('text2885').textContent=\"IF %s \";\n",sd);
+    sd = dis(id.instr,id.en);
+     fprintf(js, "document.getElementById('text2889').textContent=\"ID %s\";\n",sd);
+    sd = dis(ex.instr,ex.en);
+     fprintf(js, "document.getElementById('text2893').textContent=\"EX %s\";\n",sd);
+    sd = dis(wb.instr,wb.en);
+     fprintf(js, "document.getElementById('text2897').textContent=\"MEM %s\";\n",sd);
+    sd = dis(wb_temp.instr,wb_temp.en);
+     fprintf(js, "document.getElementById('text2901').textContent=\"WB %s\";\n",sd);
+     fprintf(js, "\n}");
+	 fflush(js);
+
+	return 0;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 int main(int argc, char **argv)
 {
@@ -1514,9 +1701,7 @@ int main(int argc, char **argv)
 		fprintf(stderr,"No input file\n");
 		exit(0);
 	}
-	FILE *writer;
 	
-	FILE *resss;
 	resss = fopen(argv[3],"w");
 	writer = fopen(strcat(argv[2],".html"),"w");
 	if(writer==NULL)
@@ -1530,12 +1715,17 @@ int main(int argc, char **argv)
 	
     
     char ins[9];
-  	int total=0;
+  	
     while(fscanf(reader,"%8s", ins) != EOF)
     {
     	//printf("%sdd",ins);	
       	hextobin(ins,im[total]);
       	total++;
+      	if(total>=16386)
+      	{
+      		fprintf(stderr, "Large instruction file than allowed 16386 instructions maximum\n");
+      		exit(0);
+      	}
     }
     pc.pc = 0;
     pc.en = 1;
@@ -1544,15 +1734,15 @@ int main(int argc, char **argv)
     ex.en=0;
     wb.en=0;
    
-    int cycles=0;
+   
     
     //xFILE *based;
 
 
-    FILE *js;
+    
    
    
-    FILE *writ;
+    
     writ = fopen("chaljaapliz.css","w");
     while(1>0)
     {
@@ -1728,170 +1918,103 @@ int main(int argc, char **argv)
 
     		continue;
     	}
-    	if(strcmp(s,"step")!=0)
+    	else if(strcmp(s,"step")==0)
+    	{
+    		if(ekstep()==-1)
+    		{
+    			break;
+    		}
+    	}
+    	else if(strcmp(s,"run")==0)
+    	{
+    		while(ekstep()!=-1)
+    		{
+
+    		}
+    		break;
+    	}
+    	else if(strcmp(s,"continue")==0)
+    	{
+    		int dff=0;
+    		if(ekstep()==-1)
+    		{
+    			break;
+    		}
+    		while(breakpoints[pc.pc]==0)
+    		{
+    			if(ekstep()==-1)
+    			{
+    				dff = -1;
+    				break;
+    			}
+    		}
+    		if(dff==-1)
+    		{
+    			break;
+    		}
+
+
+    	}
+    	else if(strcmp(s,"break")==0)
+    	{
+    		char val[10];
+    		scanf("%s",&val);
+    		char realval[8];
+    		for(int i=2;i<10;i++)
+    		{
+    			realval[i-2] = val[i];
+    		}
+    		int indi = hextodec(realval);
+    		indi = indi - 4194304;
+    		if(indi%4!=0)
+    		{
+    			fprintf(stderr, "Dude!! can't have a pc with non multiple of 4 value\n" );
+    			continue;
+    		}
+    		indi = indi /4 ;
+    		if(indi >= 16386)
+    		{
+    			fprintf(stderr, "Dude!! memory in this world is limited this pc value is too large\n" );
+    			continue;
+    		}
+    		breakpoints[indi] = 1;
+    	}
+    	else if(strcmp(s,"delete")==0)
+    	{
+    		char val[10];
+    		scanf("%s",&val);
+    		char realval[8];
+    		for(int i=2;i<10;i++)
+    		{
+    			realval[i-2] = val[i];
+    		}
+    		int indi = hextodec(realval);
+    		indi = indi - 4194304;
+    		if(indi%4!=0)
+    		{
+    			fprintf(stderr, "Dude!! can't have a pc with non multiple of 4 value\n" );
+    			continue;
+    		}
+    		indi = indi /4 ;
+    		if(indi >= 16386)
+    		{
+    			fprintf(stderr, "Dude!! memory in this world is limited this pc value is too large\n" );
+    			continue;
+    		}
+    		if(breakpoints[indi]==0)
+    		{
+    			fprintf(stderr, "Dude!! there is no breakpoint at this pc\n" );
+    			continue;
+    		}
+    		breakpoints[indi] = 0;
+    	}
+    	else
         {
-            printf("dude enter word step!! \n");
+            fprintf(stderr,"dude! enter word step or something useful!! \n");
             continue;
         }
 
-    	if(pc.en==0 && iff.en==0 && id.en==0 && ex.en==0 && wb.en==0)
-	    {
-	    	printf("end of input\n");
-		    for(int i=1;i<10;i++)
-	    	{
-	    		
-	    		{
-	    			fprintf(writ, ".fil%d {fill:grey}\n", i);
-	    			fflush(writ);
-	    		}
-	    		
-	    	}
-	    	fprintf(writ, ".stroke1 {stroke:grey;fill:grey}\n");
-	    	fflush(writ);
-			fprintf(writ, ".stroke2 {stroke:grey;fill:grey}\n");
-	    	fflush(writ);
-			fprintf(writ, ".stroke3 {stroke:grey;fill:grey}\n");
-	    	fflush(writ);
-	    	//printf("fdd\n");
 
-		    
-		    if(resss==NULL)
-		    {
-		        fprintf(stderr, "No resssult File\n");
-		        exit(0);
-		    }
-
-
-		    fprintf(resss, "Instructions,%d\n",(instrex));
-		    fprintf(resss, "Cycles,%d\n",cycles);
-		    fprintf(resss, "IPC,%.4f\n",(1.0*(instrex))/cycles);
-		    fprintf(resss, "Time (ns),%.4f\n",(cycles)/2.0);
-		    fprintf(resss, "Idle time (ns),%.4f\n",(cycles - instrex)/2.0);
-		    fprintf(resss, "Idle time (%),%.4f%\n",(100.0 * (cycles - instrex))/(cycles));
-		    fprintf(resss, "Cache Summary \nCache L1-I\nnum cache accesses,%d\n",(cacheacess));
-		    fprintf(resss, "Cache L1-D \nnum cache accesses,%d\n",ldstr);
-		    fflush(resss);
-
-    	
-		    
-
-
-	    	break;
-	    }
-
-
-
-
-	    cycles++;
-    	str=0;
-		ldr = 0;
-		wbb = 0;
-		brr=0;
-		p1=0;
-    	p2=0;
-    	p3=0;
-	    
-	    pthread_create(&fetchers[0],NULL,fetch0,(void *)&pc_temp);
-		pthread_create(&fetchers[1],NULL,fetch1,(void *)&iff_temp);
-		pthread_create(&fetchers[2],NULL,fetch2,(void *)&id_temp);
-		pthread_create(&fetchers[3],NULL,fetch3,(void *)&ex_temp);
-	    pthread_create(&fetchers[4],NULL,fetch4,(void *)&wb_temp);
-	    for(int i=0;i<5;i++)
-	    {
-	    	pthread_join(fetchers[i],NULL);
-	    }
-
-		pthread_create(&fetchers[4],NULL,writeback,(void *)&wb_temp);
-	    pthread_create(&fetchers[0],NULL,pcwala,(void *)&pc_temp);
-	    pthread_join(fetchers[4],NULL);
-	    pthread_create(&fetchers[1],NULL,regiswala,(void *)&iff_temp);
-		pthread_create(&fetchers[2],NULL,alu,(void *)&id_temp);
-		pthread_create(&fetchers[3],NULL,datamem,(void *)&ex_temp);
-	    for(int i=0;i<5;i++)
-	    {
-	    	pthread_join(fetchers[i],NULL);
-	    }
-	   	if(ex.en==-1)
-	   	{
-	   		if(id.en^iff.en==1)
-	   		{
-                if(jal!=-1)
-                {
-                    rf[jal] = pc.pc - 1;//TODO chk write pc goes inside
-                }
-	   			pc.pc = pc.pc + ex.res - 1;
-	   		}
-	   		else if(id.en==0 && iff.en==0)
-	   		{
-                if(jal!=-1)
-                {
-                    rf[jal] = pc.pc;//TODO chk write pc goes inside
-                }
-	   			pc.pc = pc.pc + ex.res ;
-	   		}
-	   		else
-	   		{
-                if(jal!=-1)
-                {
-                    rf[jal] = pc.pc - 2;//TODO chk write pc goes inside
-                }
-	   			pc.pc = pc.pc + ex.res - 2;
-	   		}
-	   		ex.en=1;
-	   		iff.en=0;
-	   		id.en=0;
-	   		pc.en=1;
-	   		branch++;
-	   		branch++;
-	   		
-	   	}
-	    // for(int i=0;i<32;i++)
-	    // {
-	    // 	printf("r%d : %d \n",i,rf[i]);
-	    // }
-	    // printf("intermediates\n");
-	    // {
-	    // 	printf("pc :en %d pc: %d\n",pc.en,pc.pc);
-	    // 	printf("iff : en:%d instr: ",iff.en);
-	    // 	print(iff.instr,32);
-	    // 	printf("id: op1-> %d op2-> %d en:%d  strreg:  %d instr: ",id.op1,id.op2,id.en,id.strreg);
-	    // 	print(id.instr,32);
-	    // 	printf("ex: res-> %d  en:%d  instr: ",ex.res,ex.en);
-	    // 	print(ex.instr,32);
-	    // 	printf("wb: res-> %d en:%d  instr: ",wb.res,wb.en);
-	    // 	print(wb.instr,32);	
-	    // }
-	    // printf("data memory\n");
-	    // {
-	    // 	for(int i=0;i<10;i++)
-	    // 	{
-	    // 		printf("dm %d: %d \n",i,dm[i]);
-	    // 	}
-	    // }
-
-	    
-	    if(pc.pc>=total)
-	    {
-	    	pc.en=0;
-	    	
-	    }
-	    js = fopen("bnjaa.js","w");
-	    fprintf(js, "function instrdisplay(){\n");
-	    fflush(js);
-	   
-		char *sd = dis(iff.instr,iff.en);
-		//printf("ddd%s\n",sd);
-	    fprintf(js, "document.getElementById('text2885').textContent=\"IF %s \";\n",sd);
-	    sd = dis(id.instr,id.en);
-	     fprintf(js, "document.getElementById('text2889').textContent=\"ID %s\";\n",sd);
-	    sd = dis(ex.instr,ex.en);
-	     fprintf(js, "document.getElementById('text2893').textContent=\"EX %s\";\n",sd);
-	    sd = dis(wb.instr,wb.en);
-	     fprintf(js, "document.getElementById('text2897').textContent=\"MEM %s\";\n",sd);
-	    sd = dis(wb_temp.instr,wb_temp.en);
-	     fprintf(js, "document.getElementById('text2901').textContent=\"WB %s\";\n",sd);
-	     fprintf(js, "\n}");
-    	 fflush(js);
 
 
 	    
