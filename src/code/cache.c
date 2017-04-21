@@ -412,9 +412,9 @@ void print_stats()
 	printf("  replace:   %d\n", cache_stat_data.replacements);
 
 	printf(" TRAFFIC (in words)\n");
-	printf("  demand fetch:  %d\n", cache_stat_inst.demand_fetches + 
-	 cache_stat_data.demand_fetches);
-	printf("  copies back:   %d\n", cache_stat_inst.copies_back +
-	 cache_stat_data.copies_back);
+	printf("  demand fetch:  %d\n", 4 * (cache_stat_inst.demand_fetches + 
+	 cache_stat_data.demand_fetches));
+	printf("  copies back:   %d\n", 4 * (cache_stat_inst.copies_back +
+	 cache_stat_data.copies_back));
 }
 /************************************************************/

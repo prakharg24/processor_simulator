@@ -1,0 +1,30 @@
+*** CACHE SETTINGS ***
+  Unified I- D-cache
+  Size: 	8192
+  Associativity: 	1
+  Block size: 	16
+  Write policy: 	WRITE BACK
+  Allocation policy: 	WRITE ALLOCATE
+processed 100000 references
+processed 200000 references
+processed 300000 references
+processed 400000 references
+processed 500000 references
+processed 600000 references
+processed 700000 references
+processed 800000 references
+
+*** CACHE STATISTICS ***
+ INSTRUCTIONS
+  accesses:  597309
+  misses:    200
+  miss rate: 0.0003 (hit rate 0.9997)
+  replace:   152
+ DATA
+  accesses:  235168
+  misses:    3061
+  miss rate: 0.0130 (hit rate 0.9870)
+  replace:   1585
+ TRAFFIC (in words)
+  demand fetch:  13044
+  copies back:   7944
