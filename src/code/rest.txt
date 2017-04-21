@@ -1,0 +1,23 @@
+*** CACHE SETTINGS ***
+  Unified I- D-cache
+  Size: 	8192
+  Associativity: 	1
+  Block size: 	16
+  Write policy: 	WRITE BACK
+  Allocation policy: 	WRITE ALLOCATE
+jghhg
+
+*** CACHE STATISTICS ***
+ INSTRUCTIONS
+  accesses:  0
+  misses:    0
+  miss rate: 0 (0)
+  replace:   0
+ DATA
+  accesses:  0
+  misses:    0
+  miss rate: 0 (0)
+  replace:   0
+ TRAFFIC (in words)
+  demand fetch:  0
+  copies back:   0
