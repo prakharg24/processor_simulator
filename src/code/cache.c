@@ -162,6 +162,7 @@ void do_work(cache *c2,unsigned addr,unsigned access_type,cache_stat *stat)
 	}
 	if(flag==-1)
 	{
+
 		
 		stat->misses++;
 		stat->demand_fetches++;
@@ -171,7 +172,7 @@ void do_work(cache *c2,unsigned addr,unsigned access_type,cache_stat *stat)
 			Pcache_line new = (Pcache_line)malloc(sizeof(cache_line));
 			c2->set_contents[index]++;
 			new->tag = tag;
-			if(access_type==2)
+			if(access_type==2 || (cache_writeback==0))
 			{
 				new->dirty = 0;
 			}
@@ -180,10 +181,10 @@ void do_work(cache *c2,unsigned addr,unsigned access_type,cache_stat *stat)
 				new->dirty = access_type;
 			}
 			insert(&c2->LRU_head[index],&c2->LRU_tail[index],new);
-			// if(access_type==1 && cache_writeback==0)
-			// {
-			// 	stat->copies_back++;
-			// }
+			if(access_type==1 && cache_writeback==0)
+			{
+				stat->copies_back++;
+			}
 			
 		}
 		else
@@ -195,7 +196,7 @@ void do_work(cache *c2,unsigned addr,unsigned access_type,cache_stat *stat)
 			delete(&c2->LRU_head[index],&c2->LRU_tail[index],c2->LRU_tail[index]);
 			Pcache_line new = (Pcache_line)malloc(sizeof(cache_line));
 			new->tag = tag;
-			if(access_type==2)
+			if(access_type==2 || (cache_writeback==0))
 			{
 				new->dirty = 0;
 			}
@@ -204,6 +205,10 @@ void do_work(cache *c2,unsigned addr,unsigned access_type,cache_stat *stat)
 				new->dirty = access_type;
 			}		
 			insert(&c2->LRU_head[index],&c2->LRU_tail[index],new);
+			if(access_type==1 && cache_writeback==0)
+			{
+				stat->copies_back++;
+			}
 			stat->replacements++;
 		}
 
@@ -214,7 +219,13 @@ void do_work(cache *c2,unsigned addr,unsigned access_type,cache_stat *stat)
 		new->tag = tag;
 		if(access_type==1)
 		{
-			new->dirty = 1;
+			if(cache_writeback==0)
+			{
+				new->dirty = 0;
+				stat->copies_back++;
+			}
+			else
+				new->dirty = 1;
 		}
 		else
 		{
@@ -260,219 +271,6 @@ void perform_access(addr, access_type)
 
 }
 
-
-
-	// if(access_type==0 || access_type==1)
-	// {
-
-
-	// 	cache_stat_data.accesses++;
-	// 	unsigned index = (addr & c2.index_mask) >> c2.index_mask_offset;
-	// 	unsigned tag = addr >> (c2.index_mask_offset + LOG2(c2.n_sets)) ;
-	// 	int flag = -1;
-	// 	Pcache_line temp = c2.LRU_head[index];
-	// 	for(int i=0;i<c2.set_contents[index];i++)
-	// 	{
-	// 		if(temp->tag==tag)
-	// 		{
-	// 			flag = 1;
-	// 			break;
-	// 		}
-	// 		temp = temp->LRU_next;
-	// 	}
-
-	// 	if(flag==-1)
-	// 	{
-			
-	// 		cache_stat_data.misses++;
-	// 		if(c2.set_contents[index]<c2.associativity)
-	// 		{
-	// 			Pcache_line new = (Pcache_line)malloc(sizeof(cache_line));
-	// 			c2.set_contents[index]++;
-	// 			new->tag = tag;
-	// 			new->dirty = access_type;
-	// 			insert(&c2.LRU_head[index],&c2.LRU_tail[index],new);
-				
-	// 		}
-	// 		else
-	// 		{
-	// 			if(c2.LRU_tail[index]->dirty==1)
-	// 			{
-
-	// 				cache_stat_data.copies_back++;
-	// 			}
-	// 			delete(&c2.LRU_head[index],&c2.LRU_tail[index],c2.LRU_tail[index]);
-	// 			Pcache_line new = (Pcache_line)malloc(sizeof(cache_line));
-	// 			new->tag = tag;
-	// 			new->dirty = access_type;
-	// 			insert(&c2.LRU_head[index],&c2.LRU_tail[index],new);
-	// 			cache_stat_data.replacements++;
-	// 		}
-
-	// 	}
-	// 	else
-	// 	{
-	// 		Pcache_line new = (Pcache_line)malloc(sizeof(cache_line));
-	// 		new->tag = tag;
-	// 		if(access_type==1)
-	// 		{
-	// 			new->dirty = 1;
-	// 		}
-	// 		else
-	// 		{
-	// 			new->dirty = temp->dirty;
-	// 		}
-	// 		delete(&c2.LRU_head[index],&c2.LRU_tail[index],temp);
-	// 		insert(&c2.LRU_head[index],&c2.LRU_tail[index],new);
-
-	// 	}
-
-
-
-
-
-	// }
-	// else
-	// {
-
-	// 	cache_stat_inst.accesses++;
-	// 	unsigned index = (addr & c1.index_mask) >> c1.index_mask_offset;
-	// 	unsigned tag = addr >> (c1.index_mask_offset + LOG2(c1.n_sets)) ;
-	// 	int flag = -1;
-	// 	Pcache_line temp = c1.LRU_head[index];
-	// 	for(int i=0;i<c1.set_contents[index];i++)
-	// 	{
-	// 		if(temp->tag==tag)
-	// 		{
-	// 			flag = 1;
-	// 			break;
-	// 		}
-	// 		temp = temp->LRU_next;
-	// 	}
-	// 	if(flag==-1)
-	// 	{
-	// 		cache_stat_inst.misses++;
-			
-	// 		if(c1.set_contents[index]<c1.associativity)
-	// 		{
-	// 			Pcache_line new = (Pcache_line)malloc(sizeof(cache_line));
-	// 			c1.set_contents[index]++;
-	// 			new->tag = tag;
-	// 			new->dirty = 0;
-	// 			insert(&c1.LRU_head[index],&c1.LRU_tail[index],new);
-	// 		}
-	// 		else
-	// 		{
-	// 			if(c1.LRU_tail[index]->dirty==1)
-	// 			{
-	// 				cache_stat_inst.copies_back++;
-	// 			}
-	// 			delete(&c1.LRU_head[index],&c1.LRU_tail[index],c1.LRU_tail[index]);
-	// 			Pcache_line new = (Pcache_line)malloc(sizeof(cache_line));
-	// 			new->tag = tag;
-	// 			new->dirty = 0;
-	// 			insert(&c1.LRU_head[index],&c1.LRU_tail[index],new);
-	// 			cache_stat_data.replacements++;
-	// 		}
-
-	// 	}
-	// 	else
-	// 	{
-	// 		Pcache_line new = (Pcache_line)malloc(sizeof(cache_line));
-	// 		new->tag = tag;
-	// 		new->dirty = temp->dirty;
-	// 		delete(&c1.LRU_head[index],&c1.LRU_tail[index],temp);
-	// 		insert(&c1.LRU_head[index],&c1.LRU_tail[index],new);
-
-	// 	}
-
-
-
-
-	//}
-	// cache_stat_inst.accesses++;
-	// unsigned index = (addr & c1.index_mask) >> c1.index_mask_offset;
-	// unsigned tag = addr >> (c1.index_mask_offset + LOG2(c1.n_sets)) ;
-	
-	// for(int i=0;i<set_contents[index];i++)
-	// {
-
-	// }
-	// if(c1.LRU_head[index]==NULL)
-	// {
-
-	// 	c1.LRU_head[index] =  (Pcache_line )(malloc(sizeof(cache_line)));
-	// 	cache_stat_inst.misses++;
-	// 	cache_stat_inst.demand_fetches++;
-	// 	c1.LRU_head[index]->tag = tag;
-	// 	c1.LRU_head[index]->dirty = 0;
-	// 	c1.set_contents[index]=1;
-	// 	return;
-	// }
-	// if(c1.LRU_head[index]->tag==tag)
-	// {
-	// }
-	// if(set_contents[index]<c1.associativity)
-	// {
-	// }
-	// if(access_type==0 || access_type==2)
-	// {
-	// 	unsigned index = (addr & c1.index_mask) >> c1.index_mask_offset;
-	// 	unsigned tag = addr >> (c1.index_mask_offset + LOG2(c1.n_sets)) ;
-		
-	// 	if(c1.LRU_head[index]==NULL)
-	// 	{
-	// 		c1.LRU_head[index] =  (Pcache_line )(malloc(sizeof(cache_line)));
-	// 		cache_stat_inst.misses++;
-	// 		cache_stat_inst.demand_fetches++;
-	// 		c1.LRU_head[index]->tag = tag;
-	// 		c1.LRU_head[index]->dirty = 0;
-	// 	}
-	// 	else if(c1.LRU_head[index]->tag!=tag)
-	// 	{
-	// 		cache_stat_inst.misses++;
-	// 		if(c1.LRU_head[index]->dirty==1)
-	// 		{
-	// 			cache_stat_inst.replacements++;
-	// 		}
-
-	// 		cache_stat_inst.demand_fetches++;
-	// 		c1.LRU_head[index]->tag = tag;
-	// 		c1.LRU_head[index]->dirty = 0;
-	// 	}
-	// }
-	// else
-	// {
-	// 	unsigned index = (addr & c1.index_mask) >> c1.index_mask_offset;
-	// 	unsigned tag = addr >> (c1.index_mask_offset + LOG2(c1.n_sets)) ;
-	// 	if(c1.LRU_head[index]==NULL)
-	// 	{
-	// 		c1.LRU_head[index] =  (Pcache_line )(malloc(sizeof(cache_line)));
-	// 		cache_stat_inst.misses++;
-	// 		cache_stat_inst.demand_fetches++;
-	// 		c1.LRU_head[index]->tag = tag;
-	// 		c1.LRU_head[index]->dirty = 0;
-	// 	}
-	// 	else if(c1.LRU_head[index]->tag!=tag)
-	// 	{
-	// 		cache_stat_inst.misses++;
-	// 		if(c1.LRU_head[index]->dirty==1)
-	// 		{
-	// 			cache_stat_inst.replacements++;
-	// 		}
-	// 		cache_stat_inst.demand_fetches++;
-	// 		c1.LRU_head[index]->tag = tag;
-	// 		c1.LRU_head[index]->dirty = 0;
-	// 	}
-	// 	else
-	// 	{
-	// 		c1.LRU_head[index]->dirty = 1;
-	// 	}
-
-	// }
-
-
-	/* handle an access to the cache */
 
 
 /************************************************************/
