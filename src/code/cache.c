@@ -165,6 +165,11 @@ void do_work(cache *c2,unsigned addr,unsigned access_type,cache_stat *stat)
 
 		
 		stat->misses++;
+		if(cache_writealloc==0 && access_type==1)
+		{
+			stat->copies_back++;                    // assume in write - back without allocate block is not read
+			return;
+		}
 		stat->demand_fetches++;
 		if(c2->set_contents[index]<c2->associativity)
 		{
