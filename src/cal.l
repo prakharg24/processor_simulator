@@ -7,7 +7,7 @@
 %%
 "false" {printf("sd1");return FALSE;}
 "true" {printf("sd2");return TRUE;}
-"="	{printf("sd3");return EQUA;}
+" = "	{printf("sd3");return EQUA;}
 "lru" {printf("sd4");return LRU;}
 ([0-9]+) {printf("sd5");yylval.intv= atoi(strdup(yytext)); return INTI;}
 ([0-9]+)|([0-9]+\.[0-9]+) {printf("sd6");yylval.doubv= atof(strdup(yytext)); return DECI;}
