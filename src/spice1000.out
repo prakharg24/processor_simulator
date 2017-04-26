@@ -11,7 +11,7 @@
   accesses:  692
   misses:    22
   miss rate: 0.0318 (hit rate 0.9682)
-  replace:   0
+  replace:   1
  DATA
   accesses:  308
   misses:    28

@@ -8,7 +8,32 @@
 #include <math.h>
 
 #include "cache.h"
-#include "main.h"
+
+
+#define TRUE 1
+#define FALSE 0
+
+/* default cache parameters--can be changed */
+#define WORD_SIZE 4
+#define WORD_SIZE_OFFSET 2
+#define DEFAULT_CACHE_SIZE (8 * 1024)
+#define DEFAULT_CACHE_BLOCK_SIZE 16
+#define DEFAULT_CACHE_ASSOC 1
+#define DEFAULT_CACHE_WRITEBACK TRUE
+#define DEFAULT_CACHE_WRITEALLOC TRUE
+
+/* constants for settting cache parameters */
+#define CACHE_PARAM_BLOCK_SIZE 0
+#define CACHE_PARAM_USIZE 1
+#define CACHE_PARAM_ISIZE 2
+#define CACHE_PARAM_DSIZE 3
+#define CACHE_PARAM_ASSOC 4
+#define CACHE_PARAM_WRITEBACK 5
+#define CACHE_PARAM_WRITETHROUGH 6
+#define CACHE_PARAM_WRITEALLOC 7
+#define CACHE_PARAM_NOWRITEALLOC 8
+
+
 
 /* cache configuration parameters */
 static int cache_split = 1;
@@ -96,7 +121,7 @@ void i_init(int exis,int size, int assoc,int bsize,int wb)
 	}
 }
 
-void d_init(int size, int assoc,int bsize,int wb)
+void d_init(int exis,int size, int assoc,int bsize,int wb)
 {
 	c2.exist = 1- exis;
 	c2.size = size;
@@ -221,7 +246,7 @@ void do_work(cache *c2,unsigned addr,unsigned access_type,cache_stat *stat)
 			Pcache_line new = (Pcache_line)malloc(sizeof(cache_line));
 			c2->set_contents[index]++;
 			new->tag = tag;
-			if(access_type==2 || (c2.write_back==0))
+			if(access_type==2 || (c2->write_back==0))
 			{
 				new->dirty = 0;
 			}
@@ -230,7 +255,7 @@ void do_work(cache *c2,unsigned addr,unsigned access_type,cache_stat *stat)
 				new->dirty = access_type;
 			}
 			insert(&c2->LRU_head[index],&c2->LRU_tail[index],new);
-			if(access_type==1 && c2.write_back==0)
+			if(access_type==1 && c2->write_back==0)
 			{
 				stat->copies_back++;
 			}
@@ -245,7 +270,7 @@ void do_work(cache *c2,unsigned addr,unsigned access_type,cache_stat *stat)
 			delete(&c2->LRU_head[index],&c2->LRU_tail[index],c2->LRU_tail[index]);
 			Pcache_line new = (Pcache_line)malloc(sizeof(cache_line));
 			new->tag = tag;
-			if(access_type==2 || (c2.write_back==0))
+			if(access_type==2 || (c2->write_back==0))
 			{
 				new->dirty = 0;
 			}
@@ -254,7 +279,7 @@ void do_work(cache *c2,unsigned addr,unsigned access_type,cache_stat *stat)
 				new->dirty = access_type;
 			}		
 			insert(&c2->LRU_head[index],&c2->LRU_tail[index],new);
-			if(access_type==1 && c2.write_back==0)
+			if(access_type==1 && c2->write_back==0)
 			{
 				stat->copies_back++;
 			}
@@ -268,7 +293,7 @@ void do_work(cache *c2,unsigned addr,unsigned access_type,cache_stat *stat)
 		new->tag = tag;
 		if(access_type==1)
 		{
-			if(c2.write_back==0)
+			if(c2->write_back==0)
 			{
 				new->dirty = 0;
 				stat->copies_back++;

@@ -38,7 +38,6 @@ typedef struct cache_line_ {
 } cache_line, *Pcache_line;
 
 typedef struct cache_ {
-  int exist;
   int size;			/* cache size */
   int associativity;		/* cache associativity */
   int n_sets;			/* number of cache sets */
@@ -48,7 +47,6 @@ typedef struct cache_ {
   Pcache_line *LRU_tail;	/* tail of LRU list for each set */
   int *set_contents;		/* number of valid entries in set */
   int contents;			/* number of valid entries in cache */
-  int write_back;
 } cache, *Pcache;
 
 typedef struct cache_stat_ {
@@ -69,8 +67,6 @@ void delete();
 void insert();
 void dump_settings();
 void print_stats();
-void i_init(int exis,int size, int assoc,int bsize,int wb);
-void d_init(int exis,int size, int assoc,int bsize,int wb);
 
 
 /* macros */

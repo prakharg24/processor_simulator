@@ -4,28 +4,7 @@
  */
 
 
-#define TRUE 1
-#define FALSE 0
 
-/* default cache parameters--can be changed */
-#define WORD_SIZE 4
-#define WORD_SIZE_OFFSET 2
-#define DEFAULT_CACHE_SIZE (8 * 1024)
-#define DEFAULT_CACHE_BLOCK_SIZE 16
-#define DEFAULT_CACHE_ASSOC 1
-#define DEFAULT_CACHE_WRITEBACK TRUE
-#define DEFAULT_CACHE_WRITEALLOC TRUE
-
-/* constants for settting cache parameters */
-#define CACHE_PARAM_BLOCK_SIZE 0
-#define CACHE_PARAM_USIZE 1
-#define CACHE_PARAM_ISIZE 2
-#define CACHE_PARAM_DSIZE 3
-#define CACHE_PARAM_ASSOC 4
-#define CACHE_PARAM_WRITEBACK 5
-#define CACHE_PARAM_WRITETHROUGH 6
-#define CACHE_PARAM_WRITEALLOC 7
-#define CACHE_PARAM_NOWRITEALLOC 8
 
 
 /* structure definitions */
